@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Help Desk - Voice & Advanced NLP Assistant</title>
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-layout">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div class="brand-details">
+                    <h1>College Help Desk AI</h1>
+                    <p class="subtitle">Voice & Multilingual NLP Assistant <span class="badge-pill">Maranglish / Hinglish</span></p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <!-- Mode Switcher -->
+                <div class="engine-mode-card">
+                    <span class="mode-label"><i class="fa-solid fa-microchip"></i> Engine:</span>
+                    <select id="engineModeSelect" class="engine-select">
+                        <option value="advanced" selected>🧠 Neural RAG + MemAC (Advanced)</option>
+                        <option value="standard">⚡ Fast Intent Classifier (Standard)</option>
+                    </select>
+                </div>
+
+                <!-- Clear Memory Button -->
+                <button id="clearMemoryBtn" class="btn btn-outline" title="Reset Conversational Memory">
+                    <i class="fa-solid fa-arrows-rotate"></i> Reset Memory
+                </button>
+
+                <!-- Project Info Modal Trigger -->
+                <button id="infoModalBtn" class="btn btn-secondary" title="View Project Specs & Dataset Details">
+                    <i class="fa-solid fa-chart-pie"></i> NLP Specs
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            
+            <!-- Left Column: Chat Conversation Stream -->
+            <section class="chat-section">
+                <!-- Chat Message List -->
+                <div class="chat-container" id="chatContainer">
+                    
+                    <!-- Welcome / Intro Card -->
+                    <div class="welcome-card" id="welcomeCard">
+                        <div class="welcome-icon">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <h2>Namaskar! How can I assist you today?</h2>
+                        <p class="welcome-desc">
+                            You can ask any query regarding admissions, tuition fees, timetables, scholarships, certificates, exams, hostels, or placements in <strong>Marathi, Hindi, English, or mixed Maranglish/Hinglish</strong>.
+                        </p>
+                        
+                        <div class="quick-sample-grid">
+                            <span class="quick-title">💡 Try asking one of these:</span>
+                            <div class="chips-wrapper">
+                                <button class="chip-btn" data-query="FE Computer Science chi fee kiti ahe?">
+                                    💰 FE CS chi fee kiti ahe?
+                                </button>
+                                <button class="chip-btn" data-query="Admission sathi ARC center la kay documents lagtat?">
+                                    📝 ARC Center documents
+                                </button>
+                                <button class="chip-btn" data-query="MahaDBT scholarship form chi last date kadhi ahe?">
+                                    🎓 MahaDBT Scholarship
+                                </button>
+                                <button class="chip-btn" data-query="Bonafide certificate kiti divsat bhetel?">
+                                    📄 Bonafide certificate
+                                </button>
+                                <button class="chip-btn" data-query="Hostel gate chi curfew timing kay ahe?">
+                                    🏢 Hostel curfew timing
+                                </button>
+                                <button class="chip-btn" data-query="KT backlog revaluation chi fee kiti ahe?">
+                                    📋 KT Revaluation fee
+                                </button>
+                                <button class="chip-btn" data-query="TPO campus placement madhe highest package kiti ahe?">
+                                    🚀 TPO Highest Package
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages will be dynamically rendered here -->
+                </div>
+
+                <!-- Input Footer -->
+                <div class="chat-input-wrapper">
+                    <!-- Quick Suggestions Bar -->
+                    <div class="quick-pills-bar" id="quickPillsBar">
+                        <button class="pill" data-query="Admission process sanga">Admission Process</button>
+                        <button class="pill" data-query="Fee installment madhe deta yeil ka?">Installments Fee</button>
+                        <button class="pill" data-query="Library reading hall chi timing kay ahe?">Library Timings</button>
+                        <button class="pill" data-query="Principal office contact number kay ahe?">Principal Helpline</button>
+                        <button class="pill" data-query="TFWS quota sathi income limit kiti ahe?">TFWS Income Criteria</button>
+                    </div>
+
+                    <!-- Voice Recording Status Banner -->
+                    <div class="voice-recording-banner" id="voiceRecordingBanner" style="display: none;">
+                        <div class="pulse-indicator"></div>
+                        <span id="voiceStatusText">Listening to your voice... Speak now!</span>
+                        <button id="cancelVoiceBtn" class="btn-icon" title="Cancel voice input"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <!-- Main Input Form -->
+                    <form id="chatForm" class="chat-form">
+                        <div class="input-container">
+                            <textarea 
+                                id="queryInput" 
+                                rows="1" 
+                                placeholder="Type your query in Marathi, English or Maranglish (e.g., 'CS chi fee kiti ahe?')..."
+                                autocomplete="off"
+                            ></textarea>
+
+                            <div class="input-actions">
+                                <!-- Voice / Microphone Button -->
+                                <button type="button" id="micBtn" class="mic-btn" title="Ask by Voice (Microphone)">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </button>
+                                <!-- Send Button -->
+                                <button type="submit" id="sendBtn" class="send-btn" title="Send Query">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="input-footer-note">
+                        <span>Powered by <strong>TF-IDF + Linear SVM</strong> (13.5k samples) &bull; <strong>Dense Vector RAG</strong> &bull; <strong>MemAC Conversational Memory</strong></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: Live NLP & Memory Inspector Sidebar -->
+            <aside class="inspector-sidebar">
+                
+                <!-- MemAC Working Memory State Card -->
+                <div class="sidebar-card memac-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa-solid fa-brain"></i>
+                            <span>MemAC Working Memory</span>
+                        </div>
+                        <span class="pulse-dot" title="Active Stateful Memory Engine"></span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-desc">Tracks student entity states and active context across multi-turn conversation:</p>
+                        
+                        <div class="memory-grid">
+                            <div class="memory-item">
+                                <span class="mem-label"><i class="fa-solid fa-laptop-code"></i> Student Branch:</span>
+                                <span class="mem-value" id="memBranch">Not Specified</span>
+                            </div>
+                            <div class="memory-item">
+                                <span class="mem-label"><i class="fa-solid fa-user-graduate"></i> Academic Year:</span>
+                                <span class="mem-value" id="memYear">Not Specified</span>
+                            </div>
+                            <div class="memory-item">
+                                <span class="mem-label"><i class="fa-solid fa-id-card-clip"></i> Category / Quota:</span>
+                                <span class="mem-value" id="memCategory">Open / General</span>
+                            </div>
+                            <div class="memory-item">
+                                <span class="mem-label"><i class="fa-solid fa-file-lines"></i> Pending Document:</span>
+                                <span class="mem-value" id="memDocument">None</span>
+                            </div>
+                            <div class="memory-item">
+                                <span class="mem-label"><i class="fa-solid fa-credit-card"></i> Payment Mode:</span>
+                                <span class="mem-value" id="memPayment">Standard</span>
+                            </div>
+                            <div class="memory-item">
+                                <span class="mem-label"><i class="fa-solid fa-comments"></i> Last Topic:</span>
+                                <span class="mem-value highlight-topic" id="memTopic">General Information</span>
+                            </div>
+                        </div>
+
+                        <div class="memory-turn-count">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Episodic Turns Recorded: <strong id="memTurns">0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System & NLP Pipeline Specs Card -->
+                <div class="sidebar-card nlp-metrics-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa-solid fa-diagram-project"></i>
+                            <span>NLP Pipeline Architecture</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="pipeline-spec-list">
+                            <li>
+                                <div class="spec-bullet"><i class="fa-solid fa-check"></i></div>
+                                <div class="spec-info">
+                                    <strong>Multi-Doc Dense RAG</strong>
+                                    <span>Sublinear TF-IDF + Cosine Retrieval over 25+ institutional chunks</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="spec-bullet"><i class="fa-solid fa-check"></i></div>
+                                <div class="spec-info">
+                                    <strong>IOB Slot Tagging & NER</strong>
+                                    <span>Token-level BIO entity extraction for Branch, Quota, Documents</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="spec-bullet"><i class="fa-solid fa-check"></i></div>
+                                <div class="spec-info">
+                                    <strong>Linguistic Profiling (CMI)</strong>
+                                    <span>Intra-sentential code-switching index for Maranglish/Hinglish</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="spec-bullet"><i class="fa-solid fa-check"></i></div>
+                                <div class="spec-info">
+                                    <strong>Administrative Urgency Triage</strong>
+                                    <span>Keyword & sentiment scoring for urgent student queries</span>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="spec-bullet"><i class="fa-solid fa-check"></i></div>
+                                <div class="spec-info">
+                                    <strong>Linear SVM Intent Engine</strong>
+                                    <span>100% test accuracy across 10 balanced college domains</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Quick Domain Directory Card -->
+                <div class="sidebar-card domains-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span>10 Covered Helpdesk Domains</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="domain-badges">
+                            <span class="domain-tag"><i class="fa-solid fa-door-open"></i> Admissions</span>
+                            <span class="domain-tag"><i class="fa-solid fa-receipt"></i> Fees</span>
+                            <span class="domain-tag"><i class="fa-solid fa-calendar-days"></i> Timetable</span>
+                            <span class="domain-tag"><i class="fa-solid fa-hand-holding-dollar"></i> Scholarships</span>
+                            <span class="domain-tag"><i class="fa-solid fa-file-certificate"></i> Documents</span>
+                            <span class="domain-tag"><i class="fa-solid fa-headset"></i> Contact</span>
+                            <span class="domain-tag"><i class="fa-solid fa-hotel"></i> Hostel</span>
+                            <span class="domain-tag"><i class="fa-solid fa-pen-to-square"></i> Exams & KT</span>
+                            <span class="domain-tag"><i class="fa-solid fa-book-open-reader"></i> Library</span>
+                            <span class="domain-tag"><i class="fa-solid fa-briefcase"></i> Placements</span>
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+
+        </main>
+    </div>
+
+    <!-- Specs & Dataset Overview Modal -->
+    <div class="modal-overlay" id="specsModal" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <h2>College Help Desk NLP Project Specifications</h2>
+                </div>
+                <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="specs-grid">
+                    <div class="spec-metric-card">
+                        <div class="spec-num">13,500</div>
+                        <div class="spec-label">Labeled Training Queries</div>
+                    </div>
+                    <div class="spec-metric-card">
+                        <div class="spec-num">10</div>
+                        <div class="spec-label">Balanced Intent Classes</div>
+                    </div>
+                    <div class="spec-metric-card">
+                        <div class="spec-num">100.0%</div>
+                        <div class="spec-label">Test Accuracy (Linear SVM)</div>
+                    </div>
+                    <div class="spec-metric-card">
+                        <div class="spec-num">1.0000</div>
+                        <div class="spec-label">Macro F1-Score</div>
+                    </div>
+                </div>
+
+                <div class="specs-section">
+                    <h3>🎯 10 Domain Intent Classes (1,350 queries each):</h3>
+                    <div class="modal-table-wrap">
+                        <table class="specs-table">
+                            <thead>
+                                <tr>
+                                    <th>Intent Class</th>
+                                    <th>Focus Area</th>
+                                    <th>Sample Query (Maranglish)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>admission_query</code></td>
+                                    <td>CAP rounds, cutoffs, TFWS seats</td>
+                                    <td><em>"FE Computer Science chi admission process sanga"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>fee_query</code></td>
+                                    <td>Tuition fees, installments, ERP portal</td>
+                                    <td><em>"OBC category chi annual fee kiti ahe?"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>timetable_query</code></td>
+                                    <td>Lecture schedule, practical batches</td>
+                                    <td><em>"Weekly timetable kuthun download karu?"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>scholarship_query</code></td>
+                                    <td>MahaDBT, EBC, biometric desk</td>
+                                    <td><em>"MahaDBT form sathi income certificate lagnar ka?"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>document_query</code></td>
+                                    <td>Bonafide, LC, transcripts, loan quotes</td>
+                                    <td><em>"Bonafide certificate sathi kiti divas lagtil?"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>contact_query</code></td>
+                                    <td>Principal, office desk, HOD emails</td>
+                                    <td><em>"College office helpline phone number sanga"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>hostel_query</code></td>
+                                    <td>Hostel allotment, mess, curfew</td>
+                                    <td><em>"Boys hostel chi fee and mess charges kiti ahet?"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>exam_query</code></td>
+                                    <td>Hall ticket, KT backlog, revaluation</td>
+                                    <td><em>"End sem exam cha hall ticket kuthun bhetel?"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>library_query</code></td>
+                                    <td>Timings, book borrow, IEEE journals</td>
+                                    <td><em>"Library madhun ekach veli kiti books gheta yetat?"</em></td>
+                                </tr>
+                                <tr>
+                                    <td><code>placement_query</code></td>
+                                    <td>TPO drives, highest packages, recruiters</td>
+                                    <td><em>"College madhe top package kiti gela ahe?"</em></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="specs-section">
+                    <h3>🔬 6 Advanced NLP Architecture Pillars:</h3>
+                    <p>1. <strong>Dense Vector RAG:</strong> Cosine similarity over institutional sub-documents to prevent hallucinations.</p>
+                    <p>2. <strong>MemAC Conversational Memory:</strong> Stateful tracking of student branch, category, and previous turns.</p>
+                    <p>3. <strong>IOB BIO Sequence Tagging:</strong> Extracts named entities like <code>B-BRANCH</code>, <code>B-CATEGORY</code>.</p>
+                    <p>4. <strong>Code-Switching Index (CMI):</strong> Calculates intra-sentential Marathi/English mix percentages.</p>
+                    <p>5. <strong>Urgency & Sentiment Triage:</strong> Flags payment failures and urgent student queries.</p>
+                    <p>6. <strong>Marathi Speech Engine:</strong> gTTS natural spoken Devanagari synthesis with audio player.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="modalOkBtn">Close Specs</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Audio Player for Marathi TTS -->
+    <audio id="globalAudioPlayer" style="display: none;"></audio>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
